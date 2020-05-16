@@ -34,6 +34,7 @@
 
 #include "mdc_decode.h"
 
+#include <stdint.h>
 #include <stdlib.h>
 
 #include "mdc_common.c"
@@ -217,8 +218,8 @@ static void _procbits(mdc_decoder_t *decoder, int x) {
           (unsigned char)decoder->arg, (unsigned short)decoder->unitID,
           (unsigned char)decoder->extra0, (unsigned char)decoder->extra1,
           (unsigned char)decoder->extra2, (unsigned char)decoder->extra3,
-          decoder->callback_context, (u_int32_t)decoder->timestamp_absolute,
-          (u_int32_t)decoder->timestamp_relative);
+          decoder->callback_context, (uint32_t)decoder->timestamp_absolute,
+          (uint32_t)decoder->timestamp_relative);
       decoder->good = 0;
     }
   }
@@ -312,8 +313,8 @@ static void _nlproc(mdc_decoder_t *decoder, int x) {
 
 int mdc_decoder_process_samples(mdc_decoder_t *decoder, mdc_sample_t *samples,
                                 int numSamples,
-                                u_int32_t samples_timestamp_absolute,
-                                u_int32_t samples_timestamp_relative) {
+                                uint32_t samples_timestamp_absolute,
+                                uint32_t samples_timestamp_relative) {
   decoder->timestamp_absolute = samples_timestamp_absolute;
   decoder->timestamp_relative = samples_timestamp_relative;
 

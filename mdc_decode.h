@@ -31,6 +31,8 @@
  *
 -*/
 
+#include <stdint.h>
+
 #ifndef _MDC_DECODE_H_
 #define _MDC_DECODE_H_
 
@@ -58,8 +60,8 @@ typedef void (*mdc_decoder_callback_t)(
     int frameCount,  // 1 or 2 - if 2 then extra0-3 are valid
     unsigned char op, unsigned char arg, unsigned short unitID,
     unsigned char extra0, unsigned char extra1, unsigned char extra2,
-    unsigned char extra3, void *context, u_int32_t timestamp_absolute,
-    u_int32_t timestamp_relative);
+    unsigned char extra3, void *context, uint32_t timestamp_absolute,
+    uint32_t timestamp_relative);
 
 typedef struct {
   //	mdc_float_t th;
@@ -106,8 +108,8 @@ typedef struct {
   mdc_u8_t extra3;
   mdc_decoder_callback_t callback;
   void *callback_context;
-  u_int32_t timestamp_absolute;
-  u_int32_t timestamp_relative;
+  uint32_t timestamp_absolute;
+  uint32_t timestamp_relative;
 } mdc_decoder_t;
 
 /*
@@ -137,8 +139,8 @@ mdc_decoder_t *mdc_decoder_new(int sampleRate);
 
 int mdc_decoder_process_samples(mdc_decoder_t *decoder, mdc_sample_t *samples,
                                 int numSamples,
-                                u_int32_t samples_timestamp_absolute,
-                                u_int32_t samples_timestamp_relative);
+                                uint32_t samples_timestamp_absolute,
+                                uint32_t samples_timestamp_relative);
 
 /*
  mdc_decoder_get_packet
