@@ -4,6 +4,7 @@
 #include <pulse/simple.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -72,7 +73,7 @@ void mdcCallBack(int numFrames, unsigned char op, unsigned char arg,
                  unsigned short unitID, unsigned char extra0,
                  unsigned char extra1, unsigned char extra2,
                  unsigned char extra3, void *context,
-                 u_int32_t timestamp_absolute, u_int32_t timestamp_relative) {
+                 uint32_t timestamp_absolute, uint32_t timestamp_relative) {
   char json_buffer[2048];
   snprintf(json_buffer, sizeof(json_buffer),
            "{\"type\":\"MDC1200\","
@@ -106,8 +107,8 @@ static void read_input(int inputflag) {
   unsigned char buffer[4096];
   float fbuf[16384];
   unsigned int fbuf_cnt = 0;
-  u_int32_t buffer_timestamp_absolute;      // ms
-  u_int32_t buffer_timestamp_relative = 0;  // ms
+  uint32_t buffer_timestamp_absolute;      // ms
+  uint32_t buffer_timestamp_relative = 0;  // ms
   // Relative timestamping
   // TODO: make this better by sourcing sample format/bitrate from
   // mdc_decode.c MDC_SAMPLE_FORMAT_U8 and/or related.
