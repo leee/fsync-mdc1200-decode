@@ -1,3 +1,5 @@
+CC = gcc
+
 TARGET = demod
 CFLAGS = -Wall -O3
 LDFLAGS = $(shell pkg-config --libs libpulse-simple)
@@ -15,3 +17,7 @@ $(TARGET): $(OBJECTS)
 .PHONY: clean
 clean:
 	rm -rf $(TARGET) $(OBJECTS)
+
+.PHONY: format
+format:
+	clang-format -i *.c *.h
