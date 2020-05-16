@@ -3,7 +3,7 @@
  * Author: Matthew Kaufman (matthew@eeph.com)
  *
  * Copyright (c) 2011  Matthew Kaufman  All rights reserved.
- * 
+ *
  *  This file is part of Matthew Kaufman's MDC Encoder/Decoder Library
  *
  *  The MDC Encoder/Decoder Library is free software; you can
@@ -29,54 +29,41 @@
  *
 -*/
 
+static mdc_u16_t _flip(mdc_u16_t crc, mdc_int_t bitnum) {
+  mdc_u16_t crcout, i, j;
 
+  j = 1;
+  crcout = 0;
 
-
-static mdc_u16_t _flip(mdc_u16_t crc, mdc_int_t bitnum)
-{
-	mdc_u16_t crcout, i, j;
-
-	j = 1;
-	crcout = 0;
-
-	for (i=1<<(bitnum-1); i; i>>=1)
-	{
-		if (crc & i)
-			 crcout |= j;
-		j<<= 1;
-	}
-	return (crcout);
+  for (i = 1 << (bitnum - 1); i; i >>= 1) {
+    if (crc & i) crcout |= j;
+    j <<= 1;
+  }
+  return (crcout);
 }
 
+static mdc_u16_t _docrc(mdc_u8_t *p, int len) {
+  mdc_int_t i, j;
+  mdc_u16_t c;
+  mdc_int_t bit;
+  mdc_u16_t crc = 0x0000;
 
-static mdc_u16_t _docrc(mdc_u8_t *p, int len)
-{
-	mdc_int_t i, j;
-	mdc_u16_t c;
-	mdc_int_t bit;
-	mdc_u16_t crc = 0x0000;
+  for (i = 0; i < len; i++) {
+    c = (mdc_u16_t)*p++;
 
-	for (i=0; i<len; i++)
-	{
-		c = (mdc_u16_t)*p++;
+    c = _flip(c, 8);
 
-		c = _flip(c, 8);
+    for (j = 0x80; j; j >>= 1) {
+      bit = crc & 0x8000;
+      crc <<= 1;
+      if (c & j) bit ^= 0x8000;
+      if (bit) crc ^= 0x1021;
+    }
+  }
 
-		for (j=0x80; j; j>>=1)
-		{
-			bit = crc & 0x8000;
-			crc<<= 1;
-			if (c & j)
-				bit^= 0x8000;
-			if (bit)
-				crc^= 0x1021;
-		}
-	}	
+  crc = _flip(crc, 16);
+  crc ^= 0xffff;
+  crc &= 0xFFFF;
 
-	crc = _flip(crc, 16);
-	crc ^= 0xffff;
-	crc &= 0xFFFF;
-
-	return(crc);
+  return (crc);
 }
-

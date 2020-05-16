@@ -5,7 +5,7 @@
  * Author: Matthew Kaufman (matthew@eeph.com)
  *
  * Copyright (c) 2010  Matthew Kaufman  All rights reserved.
- * 
+ *
  *  This file is part of Matthew Kaufman's MDC Encoder/Decoder Library
  *
  *  The MDC Encoder/Decoder Library is free software; you can
@@ -44,16 +44,15 @@ typedef int mdc_int_t;
 
 #ifndef MDC_FIXEDMATH
 typedef double mdc_float_t;
-#endif // MDC_FIXEDMATH
+#endif  // MDC_FIXEDMATH
 
 /* to change the data type, set this typedef: */
 typedef unsigned char mdc_sample_t;
 
 /* AND set this to match: */
-#define MDC_SAMPLE_FORMAT_U8 */
+#define MDC_SAMPLE_FORMAT_U8 * /
 //#define MDC_SAMPLE_FORMAT_S16
 /* #define MDC_SAMPLE_FORMAT_U16 */
 /* #define MDC_SAMPLE_FORMAT_FLOAT */
-
 
 #endif
