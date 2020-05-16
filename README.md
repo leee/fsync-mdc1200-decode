@@ -50,7 +50,10 @@ Remember, audio input level will need to be adjusted for best results. Alsamixer
 
 
 
+### Contributing:
+Prior to committing, please:
+* `clang-format -i *.c *.h # clang-format version 9 or greater`
 
-This software contains libraries from:
+### This software contains libraries from:
 * [atmatthewat/mdc-encode-decode](https://github.com/atmatthewat/mdc-encode-decode) by Matthew Kaufman
 * [EliasOenal/multimon-ng](https://github.com/EliasOenal/multimon-ng) by Elias Önal, Thomas Sailer
