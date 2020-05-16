@@ -75,7 +75,7 @@ void fsyncCallBack(int cmd, int subcmd, int from_fleet, int from_unit, int to_fl
 
 void mdcCallBack(int numFrames, unsigned char op, unsigned char arg, unsigned short unitID,\
                   unsigned char extra0, unsigned char extra1, unsigned char extra2, \
-                  unsigned char extra3, void *context){
+                  unsigned char extra3, void *context, u_int32_t timestamp){
     char json_buffer[2048];
     snprintf(json_buffer, sizeof(json_buffer), "{\"type\":\"MDC1200\","\
                                         "\"timestamp\":\"%d\","\
@@ -85,7 +85,7 @@ void mdcCallBack(int numFrames, unsigned char op, unsigned char arg, unsigned sh
                                          "\"ex0\":\"%02x\","\
                                          "\"ex1\":\"%02x\","\
                                          "\"ex2\":\"%02x\","\
-                                         "\"ex3\":\"%02x\"}", (int)time(NULL), op, arg, unitID,extra0, \
+                                         "\"ex3\":\"%02x\"}", timestamp, op, arg, unitID,extra0, \
                                          extra1, extra2, extra3);
 
     fprintf(stdout, "%s\n", json_buffer);
@@ -107,6 +107,7 @@ static void read_input(int inputflag) {
     pa_simple *s;
     pa_sample_spec ss;
 
+    u_int32_t buffer_timestamp;
 
     // Fleetsync
     fsync_decoder_t *f_decoder;
@@ -168,8 +169,11 @@ static void read_input(int inputflag) {
                     // Only care about catching -1 for errors, other return values dont really matter here
                     // Decoders will fire the callbacks when a message is decoded
 
+                    buffer_timestamp = time(NULL);
+                    // buffer_timestamp = 123000123000;
+
                     f_result = fsync_decoder_process_samples(f_decoder, buffer, sizeof(buffer));
-                    m_result = mdc_decoder_process_samples(m_decoder, buffer, sizeof(buffer));
+                    m_result = mdc_decoder_process_samples(m_decoder, buffer, sizeof(buffer), buffer_timestamp);
                     if (f_result == -1)
                         {
                         fprintf(stderr,"Fleetsync Decoder Error\n");

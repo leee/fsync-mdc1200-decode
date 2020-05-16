@@ -6,7 +6,7 @@
  * Author: Matthew Kaufman (matthew@eeph.com)
  *
  * Copyright (c) 2005, 2010  Matthew Kaufman  All rights reserved.
- * 
+ *
  *  This file is part of Matthew Kaufman's MDC Encoder/Decoder Library
  *
  *  The MDC Encoder/Decoder Library is free software; you can
@@ -109,7 +109,7 @@ static void _gofix(unsigned char *data)
 	int syn;
 	int fixi,fixj;
 	int ec;
-	
+
 	syn = 0;
 	for(i=0; i<7; i++)
 		csr[i] = 0;
@@ -264,7 +264,8 @@ static void _procbits(mdc_decoder_t *decoder, int x)
 								(unsigned char)decoder->extra1,
 								(unsigned char)decoder->extra2,
 								(unsigned char)decoder->extra3,
-								decoder->callback_context);
+								decoder->callback_context,
+								(u_int32_t)decoder->timestamp);
 			decoder->good = 0;
 
 		}
@@ -368,8 +369,11 @@ static void _nlproc(mdc_decoder_t *decoder, int x)
 
 int mdc_decoder_process_samples(mdc_decoder_t *decoder,
                                 mdc_sample_t *samples,
-                                int numSamples)
+                                int numSamples,
+																u_int32_t samples_timestamp)
 {
+	decoder->timestamp = samples_timestamp;
+
 	mdc_int_t i, j;
 	mdc_sample_t sample;
 #ifndef MDC_FIXEDMATH
@@ -449,7 +453,7 @@ int mdc_decoder_process_samples(mdc_decoder_t *decoder,
 				decoder->du[j].nlstep++;
 				if(decoder->du[j].nlstep > 9)
 					decoder->du[j].nlstep = 0;
-				decoder->du[j].nlevel[decoder->du[j].nlstep] = value;	
+				decoder->du[j].nlevel[decoder->du[j].nlstep] = value;
 
 				_nlproc(decoder, j);
 
@@ -462,7 +466,7 @@ int mdc_decoder_process_samples(mdc_decoder_t *decoder,
 #endif
 	}
 
-	
+
 
 	if(decoder->good)
 		return decoder->good;
@@ -470,7 +474,7 @@ int mdc_decoder_process_samples(mdc_decoder_t *decoder,
 	return 0;
 }
 
-int mdc_decoder_get_packet(mdc_decoder_t *decoder, 
+int mdc_decoder_get_packet(mdc_decoder_t *decoder,
                            unsigned char *op,
 			   unsigned char *arg,
 			   unsigned short *unitID)
@@ -495,7 +499,7 @@ int mdc_decoder_get_packet(mdc_decoder_t *decoder,
 	return 0;
 }
 
-int mdc_decoder_get_double_packet(mdc_decoder_t *decoder, 
+int mdc_decoder_get_double_packet(mdc_decoder_t *decoder,
                            unsigned char *op,
 			   unsigned char *arg,
 			   unsigned short *unitID,

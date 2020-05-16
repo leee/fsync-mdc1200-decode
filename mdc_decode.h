@@ -5,7 +5,7 @@
  * Author: Matthew Kaufman (matthew@eeph.com)
  *
  * Copyright (c) 2005, 2010  Matthew Kaufman  All rights reserved.
- * 
+ *
  *  This file is part of Matthew Kaufman's MDC Encoder/Decoder Library
  *
  *  The MDC Encoder/Decoder Library is free software; you can
@@ -61,7 +61,8 @@ typedef void (*mdc_decoder_callback_t)(	int frameCount, // 1 or 2 - if 2 then ex
 										unsigned char extra1,
 										unsigned char extra2,
 										unsigned char extra3,
-										void *context);
+										void *context,
+                    u_int32_t timestamp);
 
 typedef struct
 {
@@ -109,8 +110,9 @@ typedef struct {
 	mdc_u8_t extra3;
 	mdc_decoder_callback_t callback;
 	void *callback_context;
+  u_int32_t timestamp;
 } mdc_decoder_t;
-	
+
 
 
 /*
@@ -137,10 +139,11 @@ mdc_decoder_t * mdc_decoder_new(int sampleRate);
           1 if a decoded single packet is available to read (if no callback set)
           2 if a decoded double packet is available to read (if no callback set)
 */
- 
+
 int mdc_decoder_process_samples(mdc_decoder_t *decoder,
                                 mdc_sample_t *samples,
-                                int numSamples);
+                                int numSamples,
+                                u_int32_t samples_timestamp);
 
 
 /*
@@ -155,7 +158,7 @@ int mdc_decoder_process_samples(mdc_decoder_t *decoder,
  returns: -1 if error, 0 otherwise
 */
 
-int mdc_decoder_get_packet(mdc_decoder_t *decoder, 
+int mdc_decoder_get_packet(mdc_decoder_t *decoder,
                            unsigned char *op,
 			   unsigned char *arg,
 			   unsigned short *unitID);
@@ -176,7 +179,7 @@ int mdc_decoder_get_packet(mdc_decoder_t *decoder,
  returns: -1 if error, 0 otherwise
 */
 
-int mdc_decoder_get_double_packet(mdc_decoder_t *decoder, 
+int mdc_decoder_get_double_packet(mdc_decoder_t *decoder,
                            unsigned char *op,
 			   unsigned char *arg,
 			   unsigned short *unitID,
