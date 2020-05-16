@@ -1,0 +1,8 @@
+# Sound test data
+*.wav
+*.pcm
+*.raw
+
+# Build artifacts
+*.o
+demod
