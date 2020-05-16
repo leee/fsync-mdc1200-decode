@@ -15,12 +15,12 @@
 #include <time.h>
 
 // Network
-#include <sys/socket.h> 
-#include <arpa/inet.h> 
-#include <netinet/in.h> 
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 
 // and link the following with mdc_decode.c on compile!
-#include "fsync_decode.h" 
+#include "fsync_decode.h"
 #include "mdc_decode.h"
 
 #define UDPPORT 9101
@@ -29,19 +29,18 @@
 
 void sendJsonUDP(char *message) {
 
-    int sockfd; 
-    struct sockaddr_in servaddr; 
-    if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) { 
-        fprintf(stderr, "Socket creation error\n"); 
-        return; 
-    } 
-    memset(&servaddr, 0, sizeof(servaddr)); 
-    servaddr.sin_family = AF_INET; 
-    servaddr.sin_port = htons(UDPPORT); 
-    servaddr.sin_addr.s_addr = INADDR_ANY; 
-    int n, len; 
-    sendto(sockfd, message, strlen(message), MSG_CONFIRM, (const struct sockaddr *) &servaddr, sizeof(servaddr)); 
-    close(sockfd); 
+    int sockfd;
+    struct sockaddr_in servaddr;
+    if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
+        fprintf(stderr, "Socket creation error\n");
+        return;
+    }
+    memset(&servaddr, 0, sizeof(servaddr));
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(UDPPORT);
+    servaddr.sin_addr.s_addr = INADDR_ANY;
+    sendto(sockfd, message, strlen(message), MSG_CONFIRM, (const struct sockaddr *) &servaddr, sizeof(servaddr));
+    close(sockfd);
     return;
 
 }
@@ -88,7 +87,7 @@ void mdcCallBack(int numFrames, unsigned char op, unsigned char arg, unsigned sh
                                          "\"ex2\":\"%02x\","\
                                          "\"ex3\":\"%02x\"}", (int)time(NULL), op, arg, unitID,extra0, \
                                          extra1, extra2, extra3);
-                                         
+
     fprintf(stdout, "%s\n", json_buffer);
     sendJsonUDP(json_buffer);
 }
@@ -104,41 +103,37 @@ static void read_input(int inputflag) {
     int i;
     int error;
     int overlap = 0;
-    static int integer_only = true;
     int fd = 0;
-    unsigned char *sp;
     pa_simple *s;
     pa_sample_spec ss;
 
-    
-    // Fleetsync
-    fsync_decoder_t *f_decoder; 
-    f_decoder = fsync_decoder_new(sample_rate); 
-    fsync_decoder_set_callback(f_decoder, fsyncCallBack, 0);
-    int f_result; 
-    
-    // MDC1200 
-    mdc_decoder_t *m_decoder; 
-    unsigned char op, arg, extra0, extra1, extra2, extra3; 
-    unsigned short unitID;
-    m_decoder = mdc_decoder_new(sample_rate);  
-    mdc_decoder_set_callback(m_decoder, mdcCallBack, 0);
-    int m_result; 
 
-    
+    // Fleetsync
+    fsync_decoder_t *f_decoder;
+    f_decoder = fsync_decoder_new(sample_rate);
+    fsync_decoder_set_callback(f_decoder, fsyncCallBack, 0);
+    int f_result;
+
+    // MDC1200
+    mdc_decoder_t *m_decoder;
+    m_decoder = mdc_decoder_new(sample_rate);
+    mdc_decoder_set_callback(m_decoder, mdcCallBack, 0);
+    int m_result;
+
+
     // Pulse init if not reading raw input
     if (inputflag == 0)
         {
         ss.format = PA_SAMPLE_U8;
         ss.channels = 1;
         ss.rate = sample_rate;
-    // Try to create the recording stream 
+    // Try to create the recording stream
         if (!(s = pa_simple_new(NULL, "Fleetsync/MDC1200 Decoder", PA_STREAM_RECORD, NULL, "record", &ss, NULL, NULL, &error))) {
             fprintf(stderr, __FILE__": Pulseaudio Init Failed: %s\n", pa_strerror(error));
             exit(4);
             }
         }
-    
+
     // Decoder main routine
         fprintf(stderr, "Decoders Initialized\n");
         switch(inputflag)
@@ -153,18 +148,18 @@ static void read_input(int inputflag) {
 
     // Loop over input
         for (;;)
-            {            
+            {
             if (inputflag == 0)
                 {
-                    if (pa_simple_read(s, buffer, sizeof(buffer), &error) < 0) 
+                    if (pa_simple_read(s, buffer, sizeof(buffer), &error) < 0)
                         {
                         fprintf(stderr, __FILE__": read() failed: %s\n", strerror(errno));
                         exit(4);
                         }
                 }
-                        
-            else   
-                {     
+
+            else
+                {
                     i = read(fd, buffer, sizeof(buffer));
                 }
 
@@ -172,11 +167,9 @@ static void read_input(int inputflag) {
                     // Send buffer to decoders until callback fires
                     // Only care about catching -1 for errors, other return values dont really matter here
                     // Decoders will fire the callbacks when a message is decoded
-                    
+
                     f_result = fsync_decoder_process_samples(f_decoder, buffer, sizeof(buffer));
                     m_result = mdc_decoder_process_samples(m_decoder, buffer, sizeof(buffer));
-                    memmove(fbuf, fbuf+fbuf_cnt-overlap, overlap*sizeof(fbuf[0]));
-                    fbuf_cnt = overlap;
                     if (f_result == -1)
                         {
                         fprintf(stderr,"Fleetsync Decoder Error\n");
@@ -187,7 +180,7 @@ static void read_input(int inputflag) {
                         fprintf(stderr,"MDC Decoder Error\n");
                         exit(1);
                         }
-                    
+
             }
 }
 
@@ -221,11 +214,11 @@ int main(int argc, char *argv[]) {
         exit(-1);
         }
 
-    // Check arguments for "-" for raw input 
-    
+    // Check arguments for "-" for raw input
+
     if (argc == 2)
         {
-        if (strcmp(argv[1], "-") == 0) 
+        if (strcmp(argv[1], "-") == 0)
             {inputflag = 1;}
         }
 
@@ -234,6 +227,5 @@ int main(int argc, char *argv[]) {
 
     exit(0);
 
-    
-}
 
+}
