@@ -265,7 +265,8 @@ static void _procbits(mdc_decoder_t *decoder, int x)
 								(unsigned char)decoder->extra2,
 								(unsigned char)decoder->extra3,
 								decoder->callback_context,
-								(u_int32_t)decoder->timestamp);
+								(u_int32_t)decoder->timestamp_absolute,
+								(u_int32_t)decoder->timestamp_relative);
 			decoder->good = 0;
 
 		}
@@ -370,9 +371,11 @@ static void _nlproc(mdc_decoder_t *decoder, int x)
 int mdc_decoder_process_samples(mdc_decoder_t *decoder,
                                 mdc_sample_t *samples,
                                 int numSamples,
-																u_int32_t samples_timestamp)
+																u_int32_t samples_timestamp_absolute,
+																u_int32_t samples_timestamp_relative)
 {
-	decoder->timestamp = samples_timestamp;
+	decoder->timestamp_absolute = samples_timestamp_absolute;
+	decoder->timestamp_relative = samples_timestamp_relative;
 
 	mdc_int_t i, j;
 	mdc_sample_t sample;
