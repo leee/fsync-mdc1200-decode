@@ -62,7 +62,8 @@ typedef void (*mdc_decoder_callback_t)(	int frameCount, // 1 or 2 - if 2 then ex
 										unsigned char extra2,
 										unsigned char extra3,
 										void *context,
-                    u_int32_t timestamp);
+                    u_int32_t timestamp_absolute,
+                    u_int32_t timestamp_relative);
 
 typedef struct
 {
@@ -110,7 +111,8 @@ typedef struct {
 	mdc_u8_t extra3;
 	mdc_decoder_callback_t callback;
 	void *callback_context;
-  u_int32_t timestamp;
+  u_int32_t timestamp_absolute;
+  u_int32_t timestamp_relative;
 } mdc_decoder_t;
 
 
@@ -143,7 +145,8 @@ mdc_decoder_t * mdc_decoder_new(int sampleRate);
 int mdc_decoder_process_samples(mdc_decoder_t *decoder,
                                 mdc_sample_t *samples,
                                 int numSamples,
-                                u_int32_t samples_timestamp);
+                                u_int32_t samples_timestamp_absolute,
+                                u_int32_t samples_timestamp_relative);
 
 
 /*
