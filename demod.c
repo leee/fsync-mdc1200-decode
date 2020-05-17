@@ -95,26 +95,26 @@ void mdcCallBack(int numFrames, unsigned char op, unsigned char arg,
 
 static void read_input(int inputflag) {
   // General
-  int i;
   int error;
-  int overlap = 0;
   int fd = 0;
   pa_simple *s;
   pa_sample_spec ss;
 
-  // Rates/Sizes/Timestamping
+  // Rates/Sizes
   int sample_rate = 8000;
-  unsigned char buffer[4096];
-  float fbuf[16384];
-  unsigned int fbuf_cnt = 0;
-  uint32_t buffer_timestamp_absolute;      // ms
-  uint32_t buffer_timestamp_relative = 0;  // ms
-  // Relative timestamping
   // TODO: make this better by sourcing sample format/bitrate from
   // mdc_decode.c MDC_SAMPLE_FORMAT_U8 and/or related.
   int bit_rate = 8;
-  int buffer_timespan_ms =
-      (1000 * 8 * sizeof(buffer)) / (sample_rate * bit_rate);
+  // window buffer and overlap offset
+  // ideally buffer size could be a multiple of overlap offset, so maybe
+  // make them a ratio, but you'd need to also add offset integer so maybe not.
+  // either way hard requirement is buffer size - offset_size > mdc signal time
+  int offset_size = 16384;
+  unsigned char buffer[16384];
+  // Absolute and relative timestamping
+  uint32_t buffer_timestamp_absolute;      // ms
+  uint32_t buffer_timestamp_relative = 0;  // ms
+  int buffer_timespan_ms = (1000 * 8 * offset_size) / (sample_rate * bit_rate);
 
   // Fleetsync
   fsync_decoder_t *f_decoder;
@@ -128,20 +128,6 @@ static void read_input(int inputflag) {
   mdc_decoder_set_callback(m_decoder, mdcCallBack, 0);
   int m_result;
 
-  // Pulse init if not reading raw input
-  if (inputflag == 0) {
-    ss.format = PA_SAMPLE_U8;
-    ss.channels = 1;
-    ss.rate = sample_rate;
-    // Try to create the recording stream
-    if (!(s = pa_simple_new(NULL, "Fleetsync/MDC1200 Decoder", PA_STREAM_RECORD,
-                            NULL, "record", &ss, NULL, NULL, &error))) {
-      fprintf(stderr, __FILE__ ": Pulseaudio Init Failed: %s\n",
-              pa_strerror(error));
-      exit(4);
-    }
-  }
-
   // Decoder main routine
   fprintf(stderr, "Decoders Initialized\n");
   switch (inputflag) {
@@ -153,19 +139,33 @@ static void read_input(int inputflag) {
       break;
   }
 
+  // setup for audio interface input including Pulse init
+  if (inputflag == 0) {
+    ss.format = PA_SAMPLE_U8;
+    ss.channels = 1;
+    ss.rate = sample_rate;
+    // Try to create the recording stream
+    if (!(s = pa_simple_new(NULL, "Fleetsync/MDC1200 Decoder", PA_STREAM_RECORD,
+                            NULL, "record", &ss, NULL, NULL, &error))) {
+      fprintf(stderr, __FILE__ ": Pulseaudio Init Failed: %s\n",
+              pa_strerror(error));
+      exit(4);
+    }
+    if (pa_simple_read(s, buffer, sizeof(buffer), &error) < 0) {
+      fprintf(stderr, __FILE__ ": read() failed: %s\n", strerror(errno));
+      exit(4);
+    }
+  }
+  // setup for stdin
+  else {
+    if (read(fd, buffer, sizeof(buffer)) < 0) {
+      fprintf(stderr, __FILE__ ": read() failed: %s\n", strerror(errno));
+      exit(4);
+    }
+  }
+
   // Loop over input
   for (;;) {
-    if (inputflag == 0) {
-      if (pa_simple_read(s, buffer, sizeof(buffer), &error) < 0) {
-        fprintf(stderr, __FILE__ ": read() failed: %s\n", strerror(errno));
-        exit(4);
-      }
-    }
-
-    else {
-      i = read(fd, buffer, sizeof(buffer));
-    }
-
     // Magic time
     // Send buffer to decoders until callback fires
     // Only care about catching -1 for errors, other return values dont really
@@ -185,6 +185,23 @@ static void read_input(int inputflag) {
     if (m_result == -1) {
       fprintf(stderr, "MDC Decoder Error\n");
       exit(1);
+    }
+
+    // set this up for overlapped processing
+    if (inputflag == 0) {
+      if (pa_simple_read(s, buffer, sizeof(buffer), &error) < 0) {
+        fprintf(stderr, __FILE__ ": read() failed: %s\n", strerror(errno));
+        exit(4);
+      }
+    }
+    else {
+      unsigned char offset[offset_size];
+      if (read(fd, offset, offset_size) < 0) {
+        fprintf(stderr, __FILE__ ": read() failed: %s\n", strerror(errno));
+        exit(4);
+      }
+      memmove(&buffer[offset_size - 1], &buffer, sizeof(buffer) - offset_size);
+      memcpy(&buffer, &offset, offset_size);
     }
   }
 }
