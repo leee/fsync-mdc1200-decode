@@ -114,8 +114,7 @@ static void read_input(int inputflag) {
   // Absolute and relative timestamping
   uint32_t buffer_timestamp_absolute;      // ms
   uint32_t buffer_timestamp_relative = 0;  // ms
-  int buffer_timespan_ms =
-      (1000 * 8 * offset_size) / (sample_rate * bit_rate);
+  int buffer_timespan_ms = (1000 * 8 * offset_size) / (sample_rate * bit_rate);
 
   // Fleetsync
   fsync_decoder_t *f_decoder;
@@ -169,7 +168,8 @@ static void read_input(int inputflag) {
         fprintf(stderr, __FILE__ ": read() failed: %s\n", strerror(errno));
         exit(4);
       } else {
-        memmove(&buffer[offset_size-1], &buffer, sizeof(buffer)-offset_size);
+        memmove(&buffer[offset_size - 1], &buffer,
+                sizeof(buffer) - offset_size);
         memcpy(&buffer, &offset, offset_size);
       }
     }
