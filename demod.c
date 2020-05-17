@@ -128,20 +128,6 @@ static void read_input(int inputflag) {
   mdc_decoder_set_callback(m_decoder, mdcCallBack, 0);
   int m_result;
 
-  // Pulse init if not reading raw input
-  if (inputflag == 0) {
-    ss.format = PA_SAMPLE_U8;
-    ss.channels = 1;
-    ss.rate = sample_rate;
-    // Try to create the recording stream
-    if (!(s = pa_simple_new(NULL, "Fleetsync/MDC1200 Decoder", PA_STREAM_RECORD,
-                            NULL, "record", &ss, NULL, NULL, &error))) {
-      fprintf(stderr, __FILE__ ": Pulseaudio Init Failed: %s\n",
-              pa_strerror(error));
-      exit(4);
-    }
-  }
-
   // Decoder main routine
   fprintf(stderr, "Decoders Initialized\n");
   switch (inputflag) {
@@ -153,27 +139,33 @@ static void read_input(int inputflag) {
       break;
   }
 
+  // setup for audio interface input including Pulse init
+  if (inputflag == 0) {
+    ss.format = PA_SAMPLE_U8;
+    ss.channels = 1;
+    ss.rate = sample_rate;
+    // Try to create the recording stream
+    if (!(s = pa_simple_new(NULL, "Fleetsync/MDC1200 Decoder", PA_STREAM_RECORD,
+                            NULL, "record", &ss, NULL, NULL, &error))) {
+      fprintf(stderr, __FILE__ ": Pulseaudio Init Failed: %s\n",
+              pa_strerror(error));
+      exit(4);
+    }
+    if (pa_simple_read(s, buffer, sizeof(buffer), &error) < 0) {
+      fprintf(stderr, __FILE__ ": read() failed: %s\n", strerror(errno));
+      exit(4);
+    }
+  }
+  // setup for stdin
+  else {
+    if (read(fd, buffer, sizeof(buffer)) < 0) {
+      fprintf(stderr, __FILE__ ": read() failed: %s\n", strerror(errno));
+      exit(4);
+    }
+  }
+
   // Loop over input
   for (;;) {
-    if (inputflag == 0) {
-      if (pa_simple_read(s, buffer, sizeof(buffer), &error) < 0) {
-        fprintf(stderr, __FILE__ ": read() failed: %s\n", strerror(errno));
-        exit(4);
-      }
-    }
-
-    else {
-      unsigned char offset[offset_size];
-      if (read(fd, offset, offset_size) < 0) {
-        fprintf(stderr, __FILE__ ": read() failed: %s\n", strerror(errno));
-        exit(4);
-      } else {
-        memmove(&buffer[offset_size - 1], &buffer,
-                sizeof(buffer) - offset_size);
-        memcpy(&buffer, &offset, offset_size);
-      }
-    }
-
     // Magic time
     // Send buffer to decoders until callback fires
     // Only care about catching -1 for errors, other return values dont really
@@ -193,6 +185,23 @@ static void read_input(int inputflag) {
     if (m_result == -1) {
       fprintf(stderr, "MDC Decoder Error\n");
       exit(1);
+    }
+
+    // set this up for overlapped processing
+    if (inputflag == 0) {
+      if (pa_simple_read(s, buffer, sizeof(buffer), &error) < 0) {
+        fprintf(stderr, __FILE__ ": read() failed: %s\n", strerror(errno));
+        exit(4);
+      }
+    }
+    else {
+      unsigned char offset[offset_size];
+      if (read(fd, offset, offset_size) < 0) {
+        fprintf(stderr, __FILE__ ": read() failed: %s\n", strerror(errno));
+        exit(4);
+      }
+      memmove(&buffer[offset_size - 1], &buffer, sizeof(buffer) - offset_size);
+      memcpy(&buffer, &offset, offset_size);
     }
   }
 }
