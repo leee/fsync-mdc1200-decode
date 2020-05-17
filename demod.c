@@ -97,7 +97,6 @@ static void read_input(int inputflag) {
   // General
   int i;
   int error;
-  int overlap = 0;
   int fd = 0;
   pa_simple *s;
   pa_sample_spec ss;
@@ -105,8 +104,6 @@ static void read_input(int inputflag) {
   // Rates/Sizes/Timestamping
   int sample_rate = 8000;
   unsigned char buffer[4096];
-  float fbuf[16384];
-  unsigned int fbuf_cnt = 0;
   uint32_t buffer_timestamp_absolute;      // ms
   uint32_t buffer_timestamp_relative = 0;  // ms
   // Relative timestamping
