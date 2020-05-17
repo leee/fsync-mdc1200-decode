@@ -95,23 +95,27 @@ void mdcCallBack(int numFrames, unsigned char op, unsigned char arg,
 
 static void read_input(int inputflag) {
   // General
-  int i;
   int error;
   int fd = 0;
   pa_simple *s;
   pa_sample_spec ss;
 
-  // Rates/Sizes/Timestamping
+  // Rates/Sizes
   int sample_rate = 8000;
-  unsigned char buffer[4096];
-  uint32_t buffer_timestamp_absolute;      // ms
-  uint32_t buffer_timestamp_relative = 0;  // ms
-  // Relative timestamping
   // TODO: make this better by sourcing sample format/bitrate from
   // mdc_decode.c MDC_SAMPLE_FORMAT_U8 and/or related.
   int bit_rate = 8;
+  // window buffer and overlap offset
+  // ideally buffer size could be a multiple of overlap offset, so maybe
+  // make them a ratio, but you'd need to also add offset integer so maybe not.
+  // either way hard requirement is buffer size - offset_size > mdc signal time
+  int offset_size = 16384;
+  unsigned char buffer[16384];
+  // Absolute and relative timestamping
+  uint32_t buffer_timestamp_absolute;      // ms
+  uint32_t buffer_timestamp_relative = 0;  // ms
   int buffer_timespan_ms =
-      (1000 * 8 * sizeof(buffer)) / (sample_rate * bit_rate);
+      (1000 * 8 * offset_size) / (sample_rate * bit_rate);
 
   // Fleetsync
   fsync_decoder_t *f_decoder;
@@ -160,7 +164,14 @@ static void read_input(int inputflag) {
     }
 
     else {
-      i = read(fd, buffer, sizeof(buffer));
+      unsigned char offset[offset_size];
+      if (read(fd, offset, offset_size) < 0) {
+        fprintf(stderr, __FILE__ ": read() failed: %s\n", strerror(errno));
+        exit(4);
+      } else {
+        memmove(&buffer[offset_size-1], &buffer, sizeof(buffer)-offset_size);
+        memcpy(&buffer, &offset, offset_size);
+      }
     }
 
     // Magic time
